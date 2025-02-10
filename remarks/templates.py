@@ -30,6 +30,8 @@ def render_template(
         template_height = int(float(root.get("height").replace("pt", "")))
     elif root.get("viewBox") is not None:
         _,_, template_width, template_height = root.get("viewBox").split(" ")
+        template_width = int(template_width)
+        template_height = int(template_height)
     else:
         logging.warning(f"Can't get template dimensions for {template_svg_path}")
         return None
