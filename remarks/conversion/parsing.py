@@ -38,6 +38,7 @@ RM_TOOLS = {
     5: "Highlighter",
     18: "Highlighter",
     21: "CalligraphyPen",
+    23: "Shader",
 }
 
 
@@ -71,6 +72,9 @@ def process_tool(pen, dims, w, opc):
         opc = 0.9
     elif tool == "EraseArea":
         opc = 0.0
+    elif tool == "Shader":
+        w = 30
+        opc = 0.4
     else:
         raise ValueError(f"Found an unknown tool: {pen}")
 
