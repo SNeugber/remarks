@@ -141,7 +141,7 @@ def get_pages_data(path: str) -> Tuple[List[str], List[int], dict[int, ]]:
     templates_map = construct_templates_map(content)
     if "cPages" in content:
         return [page["id"] for page in content["cPages"]["pages"] if not page.get("deleted", {
-            "value": 0})["value"] == 1], redirection_map
+            "value": 0})["value"] == 1], redirection_map, templates_map
     return content["pages"], redirection_map, templates_map
 
 
