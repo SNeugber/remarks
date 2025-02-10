@@ -175,8 +175,9 @@ def process_document(
                     rmc_pdf_src.insert_pdf(svg_pdf, start_at=page_idx)
                 rmc_pdf_src.delete_page(page_idx + 1)
 
-            except AttributeError:
+            except AttributeError as e:
                 add_error_annotation(page)
+                raise e
             finally:
                 temp_pdf.close()
                 os.remove(temp_pdf.name)
