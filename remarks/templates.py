@@ -1,10 +1,12 @@
 import base64
+from typing import Optional
 import xml.etree.ElementTree as ET
 from io import BytesIO
 from pathlib import Path
 
 import cairosvg
 from PIL import Image
+import logging
 
 
 SCREEN_DPI = 226
@@ -13,7 +15,7 @@ SCALE = 72.0 / SCREEN_DPI
 
 def render_template(
     template_svg_path: Path, target_width: int, target_height: int
-) -> Image.Image:
+) -> Optional[Image.Image]:
     tree = ET.parse(str(template_svg_path))
     root = tree.getroot()
 
@@ -23,9 +25,14 @@ def render_template(
             is_fixed_size = True
             break
 
-    template_width = int(float(root.get("width").replace("pt", "")))
-    template_height = int(float(root.get("height").replace("pt", "")))
-
+    if root.get("width") is not None and root.get("height") is not None:
+        template_width = int(float(root.get("width").replace("pt", "")))
+        template_height = int(float(root.get("height").replace("pt", "")))
+    elif root.get("viewBox") is not None:
+        _,_, template_width, template_height = root.get("viewBox").split(" ")
+    else:
+        logging.warning(f"Can't get template dimensions for {template_svg_path}")
+        return None
     num_repetitions_vertical = (target_height + template_height - 1) // template_height
     num_repetitions_horizontal = (target_width + template_width - 1) // template_width
 
@@ -82,6 +89,8 @@ def add_template_to_svg(svg: Path, template_path: Path):
     y = float(y)
 
     template_png = render_template(template_path, width, height)
+    if template_png is None:
+        return
     template_resized = template_png.resize((int(width_pt), int(height_pt)))
     buff = BytesIO()
     template_resized.save(buff, format="png")
