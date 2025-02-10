@@ -29,6 +29,7 @@ from .utils import (
     get_ui_path,
     load_json_file,
 )
+from .templates import add_template_to_svg
 
 SVG_VIEWBOX_PATTERN = re.compile(r"^<svg .+ viewBox=\"([\-\d.]+) ([\-\d.]+) ([\-\d.]+) ([\-\d.]+)\">$")
 
@@ -87,9 +88,12 @@ def run_remarks(
 def process_document(
         metadata_path,
         out_path,
+        template_paths = None,
 ):
     document = Document(metadata_path)
     rmc_pdf_src = document.open_source_pdf()
+    if template_paths is None:
+        template_paths = {}
 
     obsidian_markdown = ObsidianMarkdownFile(document)
     obsidian_markdown.add_document_header()
@@ -112,6 +116,12 @@ def process_document(
             try:
                 # convert the pdf
                 rm_to_svg(rm_annotation_file, temp_svg.name)
+                if page_uuid in document.templates_map:
+                    template = document.templates_map[page_uuid]
+                    if template not in template_paths:
+                        logging.warning(f"Page {page_uuid} has template, but no path to template svg provided")
+                    else:
+                        add_template_to_svg(svg=temp_svg.name, template_path=template_paths[template])
                 with open(temp_svg.name, "r") as svg_f, open(temp_pdf.name, "wb") as pdf_f:
                     svg_to_pdf(svg_f, pdf_f)
                 svg_pdf = fitz.open(temp_pdf.name)

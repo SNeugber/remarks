@@ -122,13 +122,27 @@ def get_document_tags(path: str):
         for tag in content['tags']:
             yield tag['name']
 
-def get_pages_data(path: str) -> Tuple[List[str], List[int]]:
+def construct_templates_map(content) -> dict[int, str]:
+    if "cPages" not in content:
+        return {}
+    pages = content["cPages"]["pages"]
+    templates_per_page = {
+        page["id"]: page.get("template", {}).get("value", "Blank") for page in pages
+    }
+    templates_per_page = {
+        page_id: template
+        for page_id, template in templates_per_page.items()
+        if template != "Blank"
+    }
+
+def get_pages_data(path: str) -> Tuple[List[str], List[int], dict[int, ]]:
     content = read_meta_file(path, suffix=".content")
     redirection_map = construct_redirection_map(content)
+    templates_map = construct_templates_map(content)
     if "cPages" in content:
         return [page["id"] for page in content["cPages"]["pages"] if not page.get("deleted", {
             "value": 0})["value"] == 1], redirection_map
-    return content["pages"], redirection_map
+    return content["pages"], redirection_map, templates_map
 
 
 def list_ann_rm_files(path):

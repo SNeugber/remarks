@@ -20,7 +20,7 @@ from remarks.utils import (
 class Document:
     def __init__(self, metadata_path):
         self.metadata_path = metadata_path
-        self.pages_list, self.pages_map = get_pages_data(metadata_path)
+        self.pages_list, self.pages_map, self.templates_map = get_pages_data(metadata_path)
         self.doc_type = get_document_filetype(metadata_path)
         self.name = get_visible_name(metadata_path)
 
