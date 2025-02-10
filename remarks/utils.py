@@ -129,7 +129,7 @@ def construct_templates_map(content) -> dict[int, str]:
     templates_per_page = {
         page["id"]: page.get("template", {}).get("value", "Blank") for page in pages
     }
-    templates_per_page = {
+    return {
         page_id: template
         for page_id, template in templates_per_page.items()
         if template != "Blank"
