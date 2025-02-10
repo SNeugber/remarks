@@ -1,4 +1,5 @@
 import math
+import tempfile
 from typing import List
 
 import fitz
@@ -33,6 +34,10 @@ class Document:
         if self.doc_type in ["pdf", "epub"]:
             f = self.metadata_path.with_name(f"{self.metadata_path.stem}.pdf")
             pdf_src = fitz.open(f)
+
+            with tempfile.NamedTemporaryFile(suffix=".pdf", mode="w", delete=False) as tmppdf:
+                pdf_src.save(tmppdf.name, linear=True) # Fixes some stuff: https://github.com/pymupdf/PyMuPDF/discussions/1757
+                pdf_src = fitz.open(tmppdf.name)
 
             for i, page_idx in enumerate(self.pages_map):
                 if is_inserted_page(page_idx):
