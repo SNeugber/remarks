@@ -160,7 +160,7 @@ def process_document(
                         y_svg = y_shift
 
                     # create the merged page in independent document as show_pdf_page can't be done on the same document
-                    rotation = page.rotation
+                    rotation = -1 * page.rotation # WAT?
                     doc = fitz.open()
                     page = doc.new_page(-1,
                                         width=width,
