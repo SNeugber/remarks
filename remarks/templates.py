@@ -12,18 +12,18 @@ import logging
 SCREEN_DPI = 226
 SCALE = 72.0 / SCREEN_DPI
 
+HORIZONTAL_TILEABLE_TEMPLATE_PATTERNS = {"Lines", "Grid", "Dots", "Isometric", "Calligraphy"}
+VERTICAL_TILEABLE_TEMPLATE_PATTERNS = {
+    "Lines", "Grid", "Dots", "Isometric", "Calligraphy", "Margin", "Piano sheet", "Notes", "Bass",
+    "Checklist", "Guitar", "Hexagon", "US College", "US Legal"
+}
+
 
 def render_template(
     template_svg_path: Path, target_width: int, target_height: int
 ) -> Optional[Image.Image]:
     tree = ET.parse(str(template_svg_path))
     root = tree.getroot()
-
-    is_fixed_size = False  # I.e. doesn't keep repeating when scrolling down/sideways
-    for child in root.iter():
-        if "clip-path" in child.attrib:
-            is_fixed_size = True
-            break
 
     if root.get("width") is not None and root.get("height") is not None:
         template_width = int(float(root.get("width").replace("pt", "")))
@@ -35,8 +35,18 @@ def render_template(
     else:
         logging.warning(f"Can't get template dimensions for {template_svg_path}")
         return None
-    num_repetitions_vertical = (target_height + template_height - 1) // template_height
+    
+    is_landscape = target_width > target_height
+    orig_template_width, orig_template_height = template_width, template_height
+    repeats_horizontally = any(tp in template_svg_path.name for tp in HORIZONTAL_TILEABLE_TEMPLATE_PATTERNS)
+    repeats_vertically = any(tp in template_svg_path.name for tp in VERTICAL_TILEABLE_TEMPLATE_PATTERNS)
+    if is_landscape and template_height > template_width: 
+        # Landscape SVGs are stored in portrait mode, need to rotate them at rendering time!
+        template_width, template_height = template_height, template_width
+        
     num_repetitions_horizontal = (target_width + template_width - 1) // template_width
+    num_repetitions_vertical = (target_height + template_height - 1) // template_height
+    
 
     combined_root = ET.Element("svg")
     combined_root.set("xmlns", "http://www.w3.org/2000/svg")
@@ -49,11 +59,11 @@ def render_template(
     for i in range(int(num_repetitions_vertical)):
         for j in range(int(num_repetitions_horizontal)):
             group = ET.SubElement(combined_root, "g")
-            group.set(
-                "transform",
-                f"translate({j * template_width}, {i * template_height})",
-            )
-            if is_fixed_size and (i > 0 or j > 0):
+            origin_x, origin_y = j * template_width, i * template_height
+            translate = f"translate({origin_x}, {origin_y})"
+            rotate = f" rotate(-90 {orig_template_width/2} {orig_template_height/2})" if is_landscape else ""
+            group.set("transform", translate + rotate)
+            if (i > 0 and not repeats_vertically) or (j > 0 and not repeats_horizontally):
                 # Tile with white background, except for very first element, which should be the template
                 rect = ET.SubElement(group, "rect")
                 rect.set("x", "0")
